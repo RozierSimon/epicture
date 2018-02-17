@@ -1,7 +1,9 @@
 package epicture.epitech;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -18,9 +20,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.support.v7.widget.SearchView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,8 +37,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -43,6 +53,13 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
 
     ImgurAPI imgur;
+    private WebView mWebView;
+    private static final Pattern accessTokenPattern = Pattern.compile("access_token=([^&]*)");
+    private static final Pattern refreshTokenPattern = Pattern.compile("refresh_token=([^&]*)");
+    private static final Pattern expiresInPattern = Pattern.compile("expires_in=(\\d+)");
+
+
+
 
     private static class Photo {
         String id;
@@ -66,8 +83,8 @@ public class MainActivity extends AppCompatActivity {
         {
             request = new Request.Builder()
                     .url("https://api.imgur.com/3/gallery/search/time/all/1?q=" + query)
-                    .header("Authorization","Client-ID d153d804ce4cb01")
-                    .header("User-Agent","Epicture2")
+                    .header("Authorization","Client-ID 0d39c4b2e7b8c0a")
+                    .header("User-Agent","epicture")
                     .build();
         }
 
@@ -159,14 +176,55 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void setupWebView() {
+        mWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // intercept the tokens
+                // http://example.com#access_token=ACCESS_TOKEN&token_type=Bearer&expires_in=3600
+                boolean tokensURL = false;
+                if (url.startsWith("epicture://callback")) {
+                    tokensURL = true;
+                    Matcher m;
+
+                    m = refreshTokenPattern.matcher(url);
+                    m.find();
+                    String refreshToken = m.group(1);
+
+                    m = accessTokenPattern.matcher(url);
+                    m.find();
+                    String accessToken = m.group(1);
+
+                    m = expiresInPattern.matcher(url);
+                    m.find();
+                    long expiresIn = Long.valueOf(m.group(1));
+                    System.out.println(accessToken);
+                    System.out.println("COUCOU");
+
+                }
+
+                return tokensURL;
+            }
+        });
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //setContentView(R.layout.activity_main);
+
+        //imgur = new ImgurAPI();
+        FrameLayout root = new FrameLayout(this);
+        mWebView = new WebView(this);
+        root.addView(mWebView);
+        setContentView(root);
+
+        setupWebView();
+
+        mWebView.loadUrl("https://api.imgur.com/oauth2/authorize?client_id=" + "0d39c4b2e7b8c0a" + "&response_type=token");
         setContentView(R.layout.activity_main);
-
-        imgur = new ImgurAPI();
-
-    }
+        }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
