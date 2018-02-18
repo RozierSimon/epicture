@@ -7,4 +7,20 @@
         app:showAsAction="always|collapseActionView"
         android:icon="@android:drawable/ic_menu_search"
         android:title="Search" />
+    <item
+        android:id="@+id/action_connect"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Connect to Imgur"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_myimg"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="My Picture"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_upload"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Upload Picture"
+        app:showAsAction="never" />
+
 </menu>
