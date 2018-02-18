@@ -56,6 +56,7 @@ import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
     public static long expiresIn;
     public static String accessToken;
     public static String refreshToken;
+    public static String myUsername;
     public boolean isMyPicture;
     public String uploadedImage;
 
@@ -90,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
         {
             httpClient = new OkHttpClient.Builder().build();
         }
-
         private void init_request(String query)
         {
             request = new Request.Builder()
@@ -152,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
+                    System.out.println(response.toString());
                     ParseMsg(response);
                     runOnUiThread(new Runnable() {
                         @Override
@@ -162,6 +164,51 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+        public void getFav()
+        {
+            String favurl = "https://api.imgur.com/3/account/" + myUsername + "/gallery_favorites/0/newest";
+            request = new Request.Builder()
+                    .url(favurl)
+                    .addHeader("Authorization","Client-ID 0d39c4b2e7b8c0a")
+ //                   .addHeader("Authorization", "Bearer " + accessToken)
+                    .addHeader("User-Agent","epicture")
+ //                   .addHeader("Authorization","Client-Secret 21fb50ec36c4c613e1cae8817aa938362c9f6475")
+                    .build();
+            research();
+            refreshList();
+        }
+        public void setFav()
+        {
+            String favurl = "https://api.imgur.com/3/image/" + photos.get(0).id + "/favorite";
+            final MediaType JSON
+                    = MediaType.parse("application/json; charset=utf-8");
+            RequestBody body = RequestBody.create(JSON, "");
+            System.out.println("SET FAV:" + favurl);
+
+            Request nrequest = new Request.Builder()
+                    .url(favurl)
+                    .addHeader("Authorization","Client-ID 0d39c4b2e7b8c0a")
+                    .addHeader("Authorization", "Bearer " + accessToken)
+                    .addHeader("User-Agent","epicture")
+                    .post(body)
+//                    .addHeader("Authorization","Client-Secret 21fb50ec36c4c613e1cae8817aa938362c9f6475")
+                    .build();
+
+
+                System.out.println("SET FAV request:" + nrequest.toString());
+                    httpClient.newCall(nrequest).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            System.out.println("zob");
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            System.out.println(response.toString());
+                        }
+                    });
+        }
+
     }
 
     private void refreshList()
@@ -354,6 +401,12 @@ public class MainActivity extends AppCompatActivity {
                 imgur.research();
                 refreshList();
                 return true;
+            case R.id.action_getFav:
+                imgur.getFav();
+                return true;
+            case R.id.action_setFav:
+                imgur.setFav();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -364,6 +417,8 @@ public class MainActivity extends AppCompatActivity {
         menu.findItem(R.id.action_connect).setVisible(!loggedIn);
         menu.findItem(R.id.action_upload).setVisible(loggedIn);
         menu.findItem(R.id.action_myimg).setVisible(loggedIn);
+        menu.findItem(R.id.action_getFav).setVisible(loggedIn);
+        menu.findItem(R.id.action_setFav).setVisible(loggedIn);
         return super.onPrepareOptionsMenu(menu);
     }
 }

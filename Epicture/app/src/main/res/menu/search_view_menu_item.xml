@@ -22,5 +22,15 @@
         android:icon="@android:drawable/ic_menu_save"
         android:title="Upload Picture"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_getFav"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Get Favorites"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_setFav"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Add to Favorite"
+        app:showAsAction="never" />
 
 </menu>

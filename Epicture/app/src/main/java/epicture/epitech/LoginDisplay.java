@@ -15,6 +15,7 @@ public class LoginDisplay extends Activity {
     public static final Pattern accessTokenPattern = Pattern.compile("access_token=([^&]*)");
     public static final Pattern refreshTokenPattern = Pattern.compile("refresh_token=([^&]*)");
     public static final Pattern expiresInPattern = Pattern.compile("expires_in=(\\d+)");
+    public static final Pattern usernamePattern = Pattern.compile("account_username=([^&]*)");
 
     private void setupWebView() {
         mWebView.setWebViewClient(new WebViewClient() {
@@ -36,8 +37,12 @@ public class LoginDisplay extends Activity {
                     m = expiresInPattern.matcher(url);
                     m.find();
                     long expiresIn = Long.valueOf(m.group(1));
+
+                    m = usernamePattern.matcher(url);
+                    m.find();
+                    MainActivity.myUsername = m.group(1);
                     System.out.println("COUCOU");
-                    System.out.println(MainActivity.accessToken);
+                    System.out.println(MainActivity.myUsername);
                     finish();
                 }
                 return tokensURL;
