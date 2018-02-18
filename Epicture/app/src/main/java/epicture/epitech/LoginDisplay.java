@@ -41,8 +41,6 @@ public class LoginDisplay extends Activity {
                     m = usernamePattern.matcher(url);
                     m.find();
                     MainActivity.myUsername = m.group(1);
-                    System.out.println("COUCOU");
-                    System.out.println(MainActivity.myUsername);
                     finish();
                 }
                 return tokensURL;

@@ -29,6 +29,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -78,15 +79,21 @@ public class MainActivity extends AppCompatActivity {
     private static class Photo {
         String id;
         String title;
+        Button addFav;
     }
-
+    public Button setButton()
+    {
+        Button toRet = new Button(this);
+        toRet.setText("Add To Fav");
+        return (toRet);
+    }
 
     public class ImgurAPI {
 
         private OkHttpClient httpClient;
         Request request;
         public List<MainActivity.Photo> photos;
-
+        public String addOrRemove;
 
         ImgurAPI()
         {
@@ -120,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
                 for(int i=0; i<items.length();i++)
                 {
                     JSONObject item = items.getJSONObject(i);
-                    MainActivity.Photo photo = new MainActivity.Photo();
+                    final MainActivity.Photo photo = new MainActivity.Photo();
 
                     if (!isMyPicture)
                     {
@@ -148,12 +155,11 @@ public class MainActivity extends AppCompatActivity {
             httpClient.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    System.out.println("zob");
+                    System.out.println("Error: " + e.toString());
                 }
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
-                    System.out.println(response.toString());
                     ParseMsg(response);
                     runOnUiThread(new Runnable() {
                         @Override
@@ -166,51 +172,45 @@ public class MainActivity extends AppCompatActivity {
         }
         public void getFav()
         {
-            String favurl = "https://api.imgur.com/3/account/" + myUsername + "/gallery_favorites/0/newest";
+            String favurl = "https://api.imgur.com/3/account/" + myUsername + "/favorites";//"/gallery_favorites/0/newest";
             request = new Request.Builder()
                     .url(favurl)
-                    .addHeader("Authorization","Client-ID 0d39c4b2e7b8c0a")
- //                   .addHeader("Authorization", "Bearer " + accessToken)
-                    .addHeader("User-Agent","epicture")
+//                    .addHeader("Authorization","Client-ID 0d39c4b2e7b8c0a")
+                    .addHeader("Authorization", "Bearer " + accessToken)
+ //                   .addHeader("User-Agent","epicture")
  //                   .addHeader("Authorization","Client-Secret 21fb50ec36c4c613e1cae8817aa938362c9f6475")
                     .build();
+            addOrRemove = "Remove to favorite";
             research();
             refreshList();
         }
-        public void setFav()
+        public void setFav(String idp)
         {
-            String favurl = "https://api.imgur.com/3/image/" + photos.get(0).id + "/favorite";
+            String favurl = "https://api.imgur.com/3/image/" + idp + "/favorite";
             final MediaType JSON
                     = MediaType.parse("application/json; charset=utf-8");
             RequestBody body = RequestBody.create(JSON, "");
-            System.out.println("SET FAV:" + favurl);
-
             Request nrequest = new Request.Builder()
                     .url(favurl)
-                    .addHeader("Authorization","Client-ID 0d39c4b2e7b8c0a")
                     .addHeader("Authorization", "Bearer " + accessToken)
                     .addHeader("User-Agent","epicture")
                     .post(body)
-//                    .addHeader("Authorization","Client-Secret 21fb50ec36c4c613e1cae8817aa938362c9f6475")
                     .build();
 
 
-                System.out.println("SET FAV request:" + nrequest.toString());
                     httpClient.newCall(nrequest).enqueue(new Callback() {
                         @Override
                         public void onFailure(Call call, IOException e) {
-                            System.out.println("zob");
+                            System.out.println("Error:" + e.toString());
                         }
 
                         @Override
                         public void onResponse(Call call, Response response) throws IOException {
-                            System.out.println(response.toString());
                         }
                     });
         }
 
     }
-
     private void refreshList()
     {
         RecyclerView.Adapter<PhotoVH> adapter = new RecyclerView.Adapter<PhotoVH>() {
@@ -219,14 +219,24 @@ public class MainActivity extends AppCompatActivity {
                 PhotoVH vh = new PhotoVH(getLayoutInflater().inflate(R.layout.item, null));
                 vh.photo = (ImageView) vh.itemView.findViewById(R.id.photo);
                 vh.title = (TextView) vh.itemView.findViewById(R.id.title);
+                vh.button = (Button)vh.itemView.findViewById(R.id.but);
                 return vh;
             }
 
             @Override
-            public void onBindViewHolder(PhotoVH holder, int position) {
+            public void onBindViewHolder(PhotoVH holder, final int position) {
                 Picasso.with(MainActivity.this).load("https://i.imgur.com/" +
                         imgur.photos.get(position).id + ".jpg").into(holder.photo);
                 holder.title.setText(imgur.photos.get(position).title);
+                holder.button.setText(imgur.addOrRemove);
+                imgur.addOrRemove = "Add To favorite";
+                holder.button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        imgur.setFav(imgur.photos.get(position).id);
+
+                    }
+                });
             }
 
             @Override
@@ -257,8 +267,6 @@ public class MainActivity extends AppCompatActivity {
                         .addFormDataPart("image", encoded)
                         .addFormDataPart("type", "base64")
                         .build();
-
-                System.out.println(accessToken);
                 Request request = new Request.Builder()
                         .url(baseUrl + "image")
                         .addHeader("Authorization","Client-ID " + "0d39c4b2e7b8c0a")
@@ -284,8 +292,6 @@ public class MainActivity extends AppCompatActivity {
                                     JSONObject Jobject = new JSONObject(responseString);
                                     JSONObject jobject = Jobject.getJSONObject("data");
                                     uploadedImage = jobject.getString("link");
-                                    System.out.println("coucou");
-                                    System.out.println(uploadedImage);
                                     Log.d("TAG", Jobject.getString("data"));
                                     MainActivity.this.runOnUiThread(new Runnable() {
                                         public void run() {
@@ -404,9 +410,6 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_getFav:
                 imgur.getFav();
                 return true;
-            case R.id.action_setFav:
-                imgur.setFav();
-                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -418,7 +421,6 @@ public class MainActivity extends AppCompatActivity {
         menu.findItem(R.id.action_upload).setVisible(loggedIn);
         menu.findItem(R.id.action_myimg).setVisible(loggedIn);
         menu.findItem(R.id.action_getFav).setVisible(loggedIn);
-        menu.findItem(R.id.action_setFav).setVisible(loggedIn);
         return super.onPrepareOptionsMenu(menu);
     }
 }
